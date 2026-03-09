@@ -3,14 +3,14 @@ from pyspark.sql.functions import col, lit, sha2, concat_ws
 
 
 def anonymize_columns(df: DataFrame, columns: list[str], salt: str = "lgpd-demo-salt") -> DataFrame:
-    """Apply deterministic hashing to sensitive attributes.
+    """Aplica hash determinístico em atributos sensíveis.
 
-    Goal: preserve analytical joins without exposing raw PII.
+    Objetivo: preservar joins analíticos sem expor PII em texto puro.
     """
     output_df = df
     for column_name in columns:
         if column_name in output_df.columns:
-            # Governance-first: salt + hash to avoid exposing plaintext values.
+            # Governança em primeiro lugar: salt + hash para evitar exposição de valores em texto puro.
             output_df = output_df.withColumn(
                 column_name,
                 sha2(concat_ws("||", lit(salt), col(column_name).cast("string")), 256),

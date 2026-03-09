@@ -15,7 +15,7 @@ DEFAULT_REQUIRED_COLUMNS = ["tpep_pickup_datetime", "trip_distance"]
 
 
 def create_spark(app_name: str = "FlagshipMedallionLakehouse") -> SparkSession:
-    # Delta-enabled Spark session. Same pattern used in Databricks-oriented projects.
+    # Sessão Spark com Delta habilitado. Mesmo padrão usado em projetos orientados a Databricks.
     builder = (
         SparkSession.builder.appName(app_name)
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
@@ -43,14 +43,14 @@ def write_delta(df: DataFrame, output_path: str, mode: str = "overwrite", partit
 
 
 def build_bronze(raw_df: DataFrame, bronze_path: str) -> DataFrame:
-    # Bronze = raw persistence. No heavy transformation here by design.
+    # Bronze = persistência bruta. Sem transformação pesada por desenho.
     bronze_df = raw_df
     write_delta(bronze_df, bronze_path)
     return bronze_df
 
 
 def build_silver(bronze_df: DataFrame, sensitive_columns: list[str], required_columns: list[str], silver_path: str) -> DataFrame:
-    # Silver = enforce quality + standardize schema + anonymize sensitive fields.
+    # Silver = aplica qualidade + padroniza schema + anonimiza campos sensíveis.
     df = bronze_df
 
     if "tpep_pickup_datetime" in df.columns:
@@ -64,7 +64,7 @@ def build_silver(bronze_df: DataFrame, sensitive_columns: list[str], required_co
         df = df.dropna(subset=existing_required)
 
     if "VendorID" in df.columns and "tpep_pickup_datetime" in df.columns:
-        # Practical dedup key for taxi-like datasets.
+        # Chave prática de deduplicação para datasets no estilo táxi.
         df = df.dropDuplicates(["VendorID", "tpep_pickup_datetime", "trip_distance"])
     else:
         df = df.dropDuplicates()
@@ -79,7 +79,7 @@ def build_silver(bronze_df: DataFrame, sensitive_columns: list[str], required_co
 
 
 def build_gold(silver_df: DataFrame, gold_path: str) -> DataFrame:
-    # Gold = business-facing KPI layer.
+    # Gold = camada de KPIs voltada para negócio.
     metrics = []
 
     if "trip_distance" in silver_df.columns:

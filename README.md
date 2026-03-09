@@ -3,11 +3,11 @@
 Production-style Medallion pipeline built with **PySpark + Delta Lake**.
 Focus: scale, governance, and business-ready data products.
 
-## What this project proves
+## Scope
 
-- I can design and run **Bronze → Silver → Gold** with clean separation of concerns.
-- I treat **data quality and governance as non-negotiable** in the pipeline logic.
-- I deliver a **Gold layer focused on KPIs**, not only technical outputs.
+- **Bronze → Silver → Gold** with clear separation of concerns.
+- Data quality and governance embedded in the transformation flow.
+- Gold layer modeled for KPI-oriented consumption.
 
 ## Architecture
 
@@ -77,12 +77,6 @@ Gold output prioritizes decision-making metrics:
 - average trip distance
 - total revenue (when `total_amount` exists)
 - daily granularity (when pickup timestamp exists)
-
-## Why this project is portfolio-relevant
-
-- Shows end-to-end ownership: ingestion, quality, governance, and KPI delivery
-- Reflects enterprise lakehouse standards used in Databricks ecosystems
-- Supports technical and business conversations with the same artifact
 
 ## Operational Constraints
 

@@ -89,3 +89,13 @@ Gold output prioritizes decision-making metrics:
 - Designed for high-volume processing where schema drift and null spikes are common.
 - Governance is embedded in transformation code, not handled as a post-process.
 - Silver and Gold outputs are structured for auditability and KPI consumption.
+
+## Execution Evidence (Local Run)
+
+- Run date: `2026-03-09` (Windows local environment)
+- Input used for local validation: `data/raw/sample_taxi.csv`
+- Transcript log: `reports/run_2026-03-09_17-53-48.log`
+- Run notes: `reports/run_log.md`
+
+Observed blocker in this machine: Spark startup fails on Windows due to missing `HADOOP_HOME/winutils`.
+The transcript is preserved to document real execution and environment constraints.

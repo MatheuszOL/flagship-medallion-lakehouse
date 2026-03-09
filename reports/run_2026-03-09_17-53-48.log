@@ -1,0 +1,27 @@
+﻿**********************
+Início da transcrição do Windows PowerShell
+Hora de início: 20260309175348
+Nome de Usuário: DESKTOP-L3CAUD8\srmat
+Executar como Usuário: DESKTOP-L3CAUD8\srmat
+Nome da Configuração: 
+Computador: DESKTOP-L3CAUD8 (Microsoft Windows NT 10.0.19045.0)
+Aplicativo Host: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -noexit -command try { . "c:\Users\srmat\AppData\Local\Programs\Microsoft VS Code\072586267e\resources\app\out\vs\workbench\contrib\terminal\common\scripts\shellIntegration.ps1" } catch {}
+ID do Processo: 5852
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcrição iniciada, o arquivo de saída é reports/run_2026-03-09_17-53-48.log
+Timestamp: 2026-03-09_17-53-48
+JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot
+
+
+**********************
+Fim da transcrição do Windows PowerShell
+Hora de término: 20260309175352
+**********************

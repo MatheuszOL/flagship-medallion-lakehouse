@@ -22,3 +22,10 @@
 
 - Pipeline structure validated and scripts compiled.
 - Repository is ready for execution with real volume in Spark runtime.
+
+## Local Execution Evidence (2026-03-09)
+
+- Command executed locally with Java 17 configured.
+- Transcript captured in `reports/run_2026-03-09_17-53-48.log`.
+- Spark failed before pipeline processing due to missing `HADOOP_HOME/winutils` on Windows.
+- This log is intentionally versioned as environment evidence and reproducibility context.

@@ -3,11 +3,11 @@
 Production-style Medallion pipeline built with **PySpark + Delta Lake**.
 Focus: scale, governance, and business-ready data products.
 
-## Scope
+## Contexto do estudo
 
-- **Bronze → Silver → Gold** with clear separation of concerns.
-- Data quality and governance embedded in the transformation flow.
-- Gold layer modeled for KPI-oriented consumption.
+- Pipeline **Bronze → Silver → Gold** com separação clara das camadas.
+- Qualidade de dados e governança aplicadas dentro do fluxo de transformação.
+- Gold modelada para consumo de KPI diário.
 
 ## Architecture
 
@@ -84,7 +84,7 @@ Gold output prioritizes decision-making metrics:
 - Governance is embedded in transformation code, not handled as a post-process.
 - Silver and Gold outputs are structured for auditability and KPI consumption.
 
-## Run Notes (Local Study)
+## Notas de execução (ambiente local)
 
 - Study date: `2026-03-09` (Windows local environment)
 - Input used for local validation: `data/raw/sample_taxi.csv`
@@ -95,7 +95,7 @@ Main local blocker: Spark startup failed on Windows due to missing `HADOOP_HOME/
 
 ## Lessons Learned
 
-- On Windows local runs, Spark + Delta may fail before processing if Hadoop binaries are missing (`winutils`).
-- CSV/parquet ingestion can break with schema drift; validating required columns early avoids late-stage failures.
-- Timestamp normalization (`to_timestamp`) is sensitive to input format and locale; bad parsing impacts Silver quality filters.
-- Deduplication keys should be reviewed per dataset version; static keys can under-deduplicate or over-deduplicate.
+- Em execução local no Windows, Spark + Delta pode falhar antes do processamento se faltar `winutils`.
+- Ingestão CSV/parquet sofre com schema drift; validar colunas obrigatórias cedo evita erro no fim do pipeline.
+- Normalização de timestamp com `to_timestamp` é sensível ao formato de entrada e pode impactar filtros de qualidade da Silver.
+- Chave de deduplicação precisa ser revisada por versão de dataset para evitar remoção a mais ou a menos.

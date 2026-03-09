@@ -3,11 +3,11 @@
 Production-style Medallion pipeline built with **PySpark + Delta Lake**.
 Focus: scale, governance, and business-ready data products.
 
-## Contexto do estudo
+## Study Context
 
-- Pipeline **Bronze → Silver → Gold** com separação clara das camadas.
-- Qualidade de dados e governança aplicadas dentro do fluxo de transformação.
-- Gold modelada para consumo de KPI diário.
+- **Bronze → Silver → Gold** pipeline with clear layer separation.
+- Data quality and governance applied directly in the transformation flow.
+- Gold layer modeled for daily KPI consumption.
 
 ## Architecture
 
@@ -84,7 +84,7 @@ Gold output prioritizes decision-making metrics:
 - Governance is embedded in transformation code, not handled as a post-process.
 - Silver and Gold outputs are structured for auditability and KPI consumption.
 
-## Notas de execução (ambiente local)
+## Local Run Notes
 
 - Study date: `2026-03-09` (Windows local environment)
 - Input used for local validation: `data/raw/sample_taxi.csv`
@@ -95,7 +95,7 @@ Main local blocker: Spark startup failed on Windows due to missing `HADOOP_HOME/
 
 ## Lessons Learned
 
-- Em execução local no Windows, Spark + Delta pode falhar antes do processamento se faltar `winutils`.
-- Ingestão CSV/parquet sofre com schema drift; validar colunas obrigatórias cedo evita erro no fim do pipeline.
-- Normalização de timestamp com `to_timestamp` é sensível ao formato de entrada e pode impactar filtros de qualidade da Silver.
-- Chave de deduplicação precisa ser revisada por versão de dataset para evitar remoção a mais ou a menos.
+- In local Windows runs, Spark + Delta can fail before processing if `winutils` is missing.
+- CSV/parquet ingestion is affected by schema drift; validating required columns early avoids late-stage failures.
+- Timestamp normalization with `to_timestamp` is sensitive to input format and can affect Silver quality filters.
+- Deduplication keys should be reviewed by dataset version to avoid over- or under-deduplication.

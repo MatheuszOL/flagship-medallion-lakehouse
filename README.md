@@ -54,7 +54,7 @@ pip install -r requirements.txt
 
 ```bash
 python src/medallion_pipeline.py \
-  --input-path "C:/Users/srmat/Documents/Projetos git/flagship-medallion-lakehouse/data/raw/yellow_tripdata_2024-01.parquet" \
+  --input-path "<workspace-path>/flagship-medallion-lakehouse/data/raw/yellow_tripdata_2024-01.parquet" \
   --input-format parquet \
   --sensitive-columns "email,cpf,phone,card_number"
 ```

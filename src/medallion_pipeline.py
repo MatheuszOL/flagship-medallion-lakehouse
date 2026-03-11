@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime
+import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 from delta import configure_spark_with_delta_pip
@@ -29,11 +30,25 @@ DEFAULT_REQUIRED_COLUMNS = ["tpep_pickup_datetime", "trip_distance"]
 
 
 def create_spark(app_name: str = "FlagshipMedallionLakehouse") -> SparkSession:
+    if os.name == "nt":
+        hadoop_home = os.environ.get("HADOOP_HOME", r"C:\hadoop")
+        hadoop_bin = Path(hadoop_home) / "bin"
+        if (hadoop_bin / "winutils.exe").exists() and (hadoop_bin / "hadoop.dll").exists():
+            os.environ["HADOOP_HOME"] = hadoop_home
+            os.environ["hadoop.home.dir"] = hadoop_home
+            java_opt = f"-Djava.library.path={hadoop_bin}"
+            current_java_opts = os.environ.get("JAVA_TOOL_OPTIONS", "")
+            if java_opt not in current_java_opts:
+                os.environ["JAVA_TOOL_OPTIONS"] = f"{current_java_opts} {java_opt}".strip()
+
     # Sessão Spark com Delta habilitado. Mesmo padrão usado em projetos orientados a Databricks.
     builder = (
         SparkSession.builder.appName(app_name)
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
         .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+        .config("spark.delta.logStore.class", "org.apache.spark.sql.delta.storage.LocalLogStore")
+        .config("spark.hadoop.fs.file.impl", "org.apache.hadoop.fs.RawLocalFileSystem")
+        .config("spark.hadoop.fs.file.impl.disable.cache", "true")
     )
     return configure_spark_with_delta_pip(builder).getOrCreate()
 
@@ -66,6 +81,10 @@ def write_delta(
 
 def _path_exists(path: str) -> bool:
     return Path(path).exists()
+
+
+def _is_delta_table(spark: SparkSession, path: str) -> bool:
+    return _path_exists(path) and DeltaTable.isDeltaTable(spark, path)
 
 
 def _load_processed_batches(state_path: str) -> set[str]:
@@ -148,7 +167,7 @@ def build_silver(
     if "tpep_pickup_datetime" in df.columns:
         df = df.withColumn("pickup_date", date_format(col("tpep_pickup_datetime"), "yyyy-MM-dd"))
 
-    if not _path_exists(silver_path):
+    if not _is_delta_table(spark, silver_path):
         write_delta(df, silver_path, mode="overwrite", partition_by="pickup_date", merge_schema=True)
     else:
         # I use merge here because late updates are common; append-only would duplicate trips over time.
@@ -190,20 +209,16 @@ def build_quality_report(
     duplicate_ratio = duplicate_rows / total_rows if total_rows else 0.0
     invalid_ratio = invalid_rows / total_rows if total_rows else 0.0
 
-    report_df = spark.createDataFrame(
-        [
-            {
-                "batch_id": batch_id,
-                "processed_at": datetime.utcnow().isoformat(),
-                "raw_rows": int(total_rows),
-                "silver_rows_after_merge": int(silver_batch_df.count()),
-                "invalid_rows_count": int(invalid_rows),
-                "invalid_ratio": float(invalid_ratio),
-                "duplicate_rows_count": int(duplicate_rows),
-                "duplicate_ratio": float(duplicate_ratio),
-                "new_columns_detected": ",".join(new_columns_detected) if new_columns_detected else "",
-            }
-        ]
+    report_df = raw_batch_df.limit(1).select(
+        lit(batch_id).alias("batch_id"),
+        lit(datetime.now(timezone.utc).isoformat()).alias("processed_at"),
+        lit(int(total_rows)).alias("raw_rows"),
+        lit(int(silver_batch_df.count())).alias("silver_rows_after_merge"),
+        lit(int(invalid_rows)).alias("invalid_rows_count"),
+        lit(float(invalid_ratio)).alias("invalid_ratio"),
+        lit(int(duplicate_rows)).alias("duplicate_rows_count"),
+        lit(float(duplicate_ratio)).alias("duplicate_ratio"),
+        lit(",".join(new_columns_detected) if new_columns_detected else "").alias("new_columns_detected"),
     )
 
     write_mode = "append" if _path_exists(quality_report_path) else "overwrite"

@@ -1,21 +1,24 @@
 # Flagship Project: End-to-End Medallion Lakehouse
 
-Production-style Medallion pipeline built with **PySpark + Delta Lake**.
-Focus: scale, governance, and business-ready data products.
+Practical Medallion pipeline built with **PySpark + Delta Lake**.
+Focus: robustness under imperfect data, incremental batches, and observable quality.
 
-## Study Context
+## What changed in this version
 
-- **Bronze → Silver → Gold** pipeline with clear layer separation.
-- Data quality and governance applied directly in the transformation flow.
-- Gold layer modeled for daily KPI consumption.
+- Incremental processing with batch tracking (`processed_batches.txt`).
+- Idempotent behavior: same `batch_id` is skipped on rerun.
+- Silver upsert with `MERGE` on `trip_id` for late-arriving updates.
+- Schema evolution detection (new columns logged when they appear).
+- Data quality report persisted per batch.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
     A[Public Dataset\nCSV/Parquet/JSON] --> B[Bronze\nRaw Delta]
-    B --> C[Silver\nClean + Typed + Deduplicated + Anonymized]
-    C --> D[Gold\nDaily KPI Aggregates]
+  B --> C[Silver\nClean + Typed + Deduplicated + Anonymized + MERGE]
+  C --> D[Gold\nRevenue and Segment Marts]
+  C --> E[Reports\nData Quality + Batch State]
 ```
 
 ## Dataset Suggestions
@@ -54,12 +57,21 @@ pip install -r requirements.txt
 
 ```bash
 python src/medallion_pipeline.py \
-  --input-path "<workspace-path>/flagship-medallion-lakehouse/data/raw/yellow_tripdata_2024-01.parquet" \
-  --input-format parquet \
+  --input-path "<workspace-path>/flagship-medallion-lakehouse/data/raw/sample_taxi.csv" \
+  --input-format csv \
+  --batch-id taxi_2024_01_01 \
   --sensitive-columns "email,cpf,phone,card_number"
 ```
 
-Tip: place your downloaded public dataset file inside `data/raw/` and keep the same command structure.
+If you rerun with the same `--batch-id`, the run is skipped to avoid duplicate ingestion.
+
+Useful optional args:
+
+```bash
+--incremental-state-path reports/processed_batches.txt
+--schema-state-path reports/bronze_schema_columns.txt
+--quality-report-path reports/data_quality_report
+```
 
 ## Governance (LGPD)
 
@@ -69,19 +81,29 @@ Sensitive fields are anonymized in `src/privacy.py` using SHA-256 + salt.
 - no raw PII in curated layers
 - easier compliance discussions with Audit/Risk teams
 
+## Real-world behavior simulated
+
+- Bronze accepts schema drift (`mergeSchema=true`) instead of breaking on new columns.
+- Silver enforces null filtering and deduplicates by `trip_id`.
+- Silver uses `MERGE` to update existing trips when late records arrive.
+- Quality metrics are written per batch (`invalid_rows_count`, `null/invalid ratio`, `duplicate_ratio`).
+
 ## Gold KPIs
 
-Gold output prioritizes decision-making metrics:
+Gold now writes two marts:
 
-- total trips
-- average trip distance
-- total revenue (when `total_amount` exists)
-- daily granularity (when pickup timestamp exists)
+- `gold/revenue_by_region`
+  - total trips
+  - total revenue (when `total_amount` exists)
+  - daily grain when pickup timestamp exists
+- `gold/trips_by_customer_segment`
+  - trips by segment/vendor
+  - average trip distance (when available)
 
 ## Operational Constraints
 
-- Designed for high-volume processing where schema drift and null spikes are common.
-- Governance is embedded in transformation code, not handled as a post-process.
-- Silver and Gold outputs are structured for auditability and KPI consumption.
+- On Windows local runs, Spark may require `HADOOP_HOME`/`winutils.exe`.
+- `MERGE` depends on Delta runtime compatibility.
+- Quality report values are meant for trend monitoring across batches.
 
 Study notes and lessons are documented in `LESSONS_LEARNED.md`.

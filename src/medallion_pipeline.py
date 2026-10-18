@@ -23,6 +23,7 @@ from pyspark.sql.functions import (
 )
 
 from privacy import anonymize_columns
+from schema_contract import validate_required_columns
 
 
 DEFAULT_SENSITIVE_COLUMNS = ["email", "cpf", "ssn", "phone", "card_number"]
@@ -277,6 +278,9 @@ def run_pipeline(args: argparse.Namespace) -> None:
         return
 
     raw_df = read_raw_input(spark, args.input_path, args.input_format)
+    required_columns = [col_name.strip() for col_name in args.required_columns.split(",") if col_name.strip()]
+    validate_required_columns(raw_df.columns, required_columns)
+
     new_columns = _detect_new_columns(raw_df, args.schema_state_path)
     if new_columns:
         print(f"Schema evolution detected. New columns in this batch: {', '.join(new_columns)}")
@@ -284,8 +288,6 @@ def run_pipeline(args: argparse.Namespace) -> None:
     bronze_df = build_bronze(raw_df, args.bronze_path, batch_id)
 
     sensitive_columns = [col_name.strip() for col_name in args.sensitive_columns.split(",") if col_name.strip()]
-    required_columns = [col_name.strip() for col_name in args.required_columns.split(",") if col_name.strip()]
-
     bronze_batch_df = bronze_df.filter(col("ingest_batch_id") == lit(batch_id))
     silver_df = build_silver(spark, bronze_batch_df, sensitive_columns, required_columns, args.silver_path)
     quality_df = build_quality_report(
@@ -342,7 +344,11 @@ def parse_args() -> argparse.Namespace:
         help="Optional explicit batch identifier. If omitted, input filename stem is used.",
     )
     parser.add_argument("--sensitive-columns", default=",".join(DEFAULT_SENSITIVE_COLUMNS), help="Comma-separated sensitive columns.")
-    parser.add_argument("--required-columns", default=",".join(DEFAULT_REQUIRED_COLUMNS), help="Columns used for null filtering.")
+    parser.add_argument(
+        "--required-columns",
+        default=",".join(DEFAULT_REQUIRED_COLUMNS),
+        help="Required source columns; the run fails before writing Bronze if any are absent, then filters nulls.",
+    )
     return parser.parse_args()
 
 

@@ -10,6 +10,7 @@ Focus: robustness under imperfect data, incremental batches, and observable qual
 - Silver upsert with `MERGE` on `trip_id` for late-arriving updates.
 - Schema evolution detection (new columns logged when they appear).
 - Data quality report persisted per batch.
+- Required source columns are validated before Bronze writes; a missing column fails the batch with an actionable error.
 
 ## Architecture
 
@@ -64,6 +65,12 @@ python src/medallion_pipeline.py \
 ```
 
 If you rerun with the same `--batch-id`, the run is skipped to avoid duplicate ingestion.
+
+The default source contract requires `tpep_pickup_datetime` and `trip_distance`. Override it with
+`--required-columns "column_a,column_b"` when using another source. Every configured column must
+exist in the input schema; null values are then filtered from Silver and counted in the quality report.
+
+Run the Spark-independent contract tests with `python -m unittest discover -s tests`.
 
 Useful optional args:
 
